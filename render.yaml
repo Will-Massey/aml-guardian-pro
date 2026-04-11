@@ -32,7 +32,7 @@ services:
         value: "900000"
       - key: RATE_LIMIT_MAX_REQUESTS
         value: "100"
-      # Secrets - Set these manually in Render dashboard
+      # Secrets - Set these manually in Render dashboard after first deploy
       - key: DATABASE_URL
         sync: false
       - key: JWT_SECRET
@@ -41,10 +41,8 @@ services:
         sync: false
       - key: CLAURST_PROVIDER
         value: anthropic
-        sync: false
       - key: CLAURST_MODEL
         value: claude-opus-4
-        sync: false
       - key: CORS_ORIGINS
         sync: false
     disk:
@@ -59,11 +57,10 @@ services:
     buildCommand: cd frontend && npm install && npm run build
     staticPublishPath: ./frontend/dist
     envVars:
+      # NOTE: After backend deploys, update this with the actual backend URL
+      # Format: https://aml-guardian-backend.onrender.com/api
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: aml-guardian-backend
-          property: host
+        value: "https://aml-guardian-backend.onrender.com/api"
     routes:
       - type: rewrite
         source: /(.*)
