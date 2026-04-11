@@ -1,5 +1,4 @@
 # Render Blueprint for AML Guardian Pro
-# This file configures both the backend API and frontend
 
 services:
   # Backend API Service
@@ -8,14 +7,13 @@ services:
     runtime: node
     plan: standard
     region: frankfurt
-    buildCommand: cd backend && npm install && npm run build && npx prisma generate
-    startCommand: cd backend && npx prisma migrate deploy && npm start
+    rootDir: backend
+    buildCommand: npm install && npm run build && npx prisma generate
+    startCommand: npx prisma migrate deploy && npm start
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 10000
       - key: JWT_EXPIRES_IN
         value: 24h
       - key: BCRYPT_ROUNDS
@@ -32,7 +30,7 @@ services:
         value: "900000"
       - key: RATE_LIMIT_MAX_REQUESTS
         value: "100"
-      # Secrets - Set these manually in Render dashboard after first deploy
+      # Secrets - Set manually in Render dashboard
       - key: DATABASE_URL
         sync: false
       - key: JWT_SECRET
@@ -50,15 +48,15 @@ services:
       mountPath: /tmp/uploads
       sizeGB: 1
 
-  # Frontend Web Service (serves static files)
+  # Frontend Web Service
   - type: web
     name: aml-guardian-frontend
     runtime: node
     plan: standard
     region: frankfurt
-    buildCommand: cd frontend && npm install && npm run build
-    startCommand: cd frontend && npx serve -s dist -l $PORT
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npx serve -s dist -l $PORT
     envVars:
-      # NOTE: After backend deploys, update this with the actual backend URL
       - key: VITE_API_URL
-        value: "https://aml-guardian-backend.onrender.com/api"
+        value: https://aml-guardian-backend.onrender.com/api
