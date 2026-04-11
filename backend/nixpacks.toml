@@ -1,9 +1,12 @@
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
 [phases.build]
 cmds = [
   "npm install",
-  "npm run build",
-  "npx prisma generate"
+  "npx prisma generate",
+  "npm run build"
 ]
 
-[phases.setup]
-nixPkgs = ["nodejs_20"]
+[phases.setup.env]
+NODE_ENV = "production"
