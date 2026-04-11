@@ -1,0 +1,23 @@
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "npx prisma migrate deploy && npm start"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 60
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
+
+[deploy.env]
+NODE_ENV = "production"
+PORT = "3000"
+LOG_LEVEL = "info"
+UPLOAD_DIR = "/tmp/uploads"
+MAX_FILE_SIZE = "10485760"
+RATE_LIMIT_WINDOW_MS = "900000"
+RATE_LIMIT_MAX_REQUESTS = "100"
+JWT_EXPIRES_IN = "24h"
+BCRYPT_ROUNDS = "12"
+COMPANIES_HOUSE_BASE_URL = "https://api.company-information.service.gov.uk"
+CLAURST_PROVIDER = "anthropic"
+CLAURST_MODEL = "claude-opus-4"

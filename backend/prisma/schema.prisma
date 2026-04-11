@@ -1,0 +1,390 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String
+  firstName     String
+  lastName      String
+  firmName      String
+  role          UserRole  @default(ACCOUNTANT)
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lastLoginAt   DateTime?
+  
+  // Firm settings
+  firmAddress   String?
+  firmPhone     String?
+  firmEmail     String?
+  firmLogoUrl   String?
+  
+  // Relations
+  clients       Client[]
+  documents     Document[]
+  auditLogs     AuditLog[]
+  apiKeys       ApiKey[]
+  webhooks      Webhook[]
+  
+  @@map("users")
+}
+
+model Client {
+  id                    String   @id @default(uuid())
+  
+  // Company Information
+  companyName           String
+  companyNumber         String?  @unique
+  companyStatus         CompanyStatus?
+  companyType           String?
+  incorporationDate     DateTime?
+  registeredAddress     Json?
+  
+  // SIC Codes (Business Activity)
+  sicCodes              String[]
+  businessDescription   String?
+  
+  // Directors & PSCs (cached from CH)
+  officers              Json?
+  pscs                  Json?
+  
+  // Risk Assessment
+  riskLevel             RiskLevel @default(MEDIUM)
+  riskAssessmentId      String?   @unique
+  riskAssessment        RiskAssessment? @relation(fields: [riskAssessmentId], references: [id])
+  
+  // CDD Information
+  cddType               CddType   @default(STANDARD)
+  cddCompletedAt        DateTime?
+  cddExpiryDate         DateTime?
+  
+  // Source of Funds/Wealth
+  sourceOfFunds         String?
+  sourceOfWealth        String?
+  expectedTransactions  String?
+  
+  // Verification Documents
+  identityVerified      Boolean   @default(false)
+  addressVerified       Boolean   @default(false)
+  pepScreened           Boolean   @default(false)
+  sanctionsScreened     Boolean   @default(false)
+  
+  // Ongoing Monitoring
+  nextReviewDate        DateTime?
+  monitoringNotes       String?
+  
+  // Relations
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id])
+  documents             Document[]
+  
+  // Portal Access
+  portalToken           String?   @unique
+  portalTokenExpiry     DateTime?
+  portalEnabled         Boolean   @default(false)
+  portalLastAccess      DateTime?
+  
+  // Relations
+  documentRequests      DocumentRequest[]
+  
+  // Metadata
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  createdBy             String
+  updatedBy             String
+  
+  @@index([portalToken])
+  @@map("clients")
+}
+
+model RiskAssessment {
+  id                    String   @id @default(uuid())
+  
+  // AI-Generated Assessment
+  overallRiskLevel      RiskLevel
+  riskScore             Int      // 0-100
+  
+  // Risk Factors
+  businessSectorRisk    RiskFactor @default(MEDIUM)
+  geographicRisk        RiskFactor @default(MEDIUM)
+  structureRisk         RiskFactor @default(MEDIUM)
+  transparencyRisk      RiskFactor @default(MEDIUM)
+  pepRisk               RiskFactor @default(LOW)
+  sanctionsRisk         RiskFactor @default(LOW)
+  
+  // Risk Analysis
+  riskFactors           Json     // Detailed breakdown
+  riskMitigation        String[] // Recommended controls
+  requiredDocuments     String[] // Document checklist
+  ongoingMonitoring     String   // Monitoring requirements
+  
+  // AI Generation
+  aiAnalysis            String?  @db.Text
+  aiGeneratedAt         DateTime @default(now())
+  aiModel               String?
+  
+  // Manual Override
+  manualOverride        Boolean  @default(false)
+  manualRiskLevel       RiskLevel?
+  overrideReason        String?
+  overriddenBy          String?
+  overriddenAt          DateTime?
+  
+  // Justification
+  riskJustification     String?  @db.Text
+  
+  // Review
+  nextReviewDate        DateTime?
+  
+  // Relations
+  client                Client?
+  
+  // Metadata
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  @@map("risk_assessments")
+}
+
+model Document {
+  id              String       @id @default(uuid())
+  
+  // Document Info
+  name            String
+  type            DocumentType
+  description     String?
+  
+  // File Info
+  fileName        String
+  filePath        String
+  fileSize        Int
+  mimeType        String
+  
+  // Template Data (for generated docs)
+  templateData    Json?
+  
+  // Status
+  status          DocumentStatus @default(DRAFT)
+  
+  // Relations
+  clientId        String
+  client          Client         @relation(fields: [clientId], references: [id])
+  userId          String
+  user            User           @relation(fields: [userId], references: [id])
+  
+  // Metadata
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  
+  @@map("documents")
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  
+  // Action Info
+  action      AuditAction
+  entityType  String
+  entityId    String?
+  
+  // Details
+  oldValues   Json?
+  newValues   Json?
+  description String?
+  ipAddress   String?
+  userAgent   String?
+  
+  // Relations
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  
+  // Metadata
+  createdAt   DateTime @default(now())
+  
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model CompaniesHouseCache {
+  id          String   @id @default(uuid())
+  
+  // Cache Key
+  companyNumber String @unique
+  
+  // Cached Data
+  companyData   Json
+  officersData  Json?
+  pscData       Json?
+  filingData    Json?
+  
+  // Cache Metadata
+  fetchedAt     DateTime @default(now())
+  expiresAt     DateTime
+  
+  @@index([companyNumber])
+  @@index([expiresAt])
+  @@map("ch_cache")
+}
+
+model ApiKey {
+  id          String    @id @default(uuid())
+  key         String    @unique
+  name        String    // Descriptive name for the key
+  
+  // Relations
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  
+  // Status
+  isActive    Boolean   @default(true)
+  
+  // Metadata
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime?
+  lastUsedAt  DateTime?
+  
+  @@index([userId])
+  @@index([key])
+  @@map("api_keys")
+}
+
+model Webhook {
+  id          String    @id @default(uuid())
+  url         String
+  events      String[]  // Array of event types
+  
+  // Relations
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  
+  // Status
+  isActive    Boolean   @default(true)
+  
+  // Metadata
+  createdAt   DateTime  @default(now())
+  lastTriggeredAt DateTime?
+  
+  @@index([userId])
+  @@map("webhooks")
+}
+
+// Enums
+enum UserRole {
+  ADMIN
+  MLRO         // Money Laundering Reporting Officer
+  ACCOUNTANT
+  VIEWER
+}
+
+enum CompanyStatus {
+  ACTIVE
+  DISSOLVED
+  LIQUIDATION
+  RECEIVERSHIP
+  ADMINISTRATION
+  VOLUNTARY_ARRANGEMENT
+  CONVERTED_CLOSED
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum RiskFactor {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum CddType {
+  SIMPLIFIED
+  STANDARD
+  ENHANCED
+}
+
+enum DocumentType {
+  RISK_ASSESSMENT
+  AML_POLICY_ACKNOWLEDGEMENT
+  ID_VERIFICATION
+  ADDRESS_VERIFICATION
+  SOURCE_OF_FUNDS
+  SOURCE_OF_WEALTH
+  PEP_SCREENING
+  SANCTIONS_SCREENING
+  ONGOING_MONITORING_PLAN
+  CUSTOMER_DUE_DILIGENCE
+  ENGAGEMENT_LETTER
+  OTHER
+}
+
+enum DocumentStatus {
+  DRAFT
+  PENDING_VERIFICATION
+  VERIFIED
+  REJECTED
+  PENDING_SIGNATURE
+  SIGNED
+  EXPIRED
+  SUPERSEDED
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  VIEW
+  GENERATE
+  EXPORT
+  LOGIN
+  LOGOUT
+  APPROVE
+  REJECT
+  UPLOAD
+  DOWNLOAD
+}
+
+model DocumentRequest {
+  id                String            @id @default(uuid())
+  
+  // Request Details
+  type              String            // ID_VERIFICATION, ADDRESS_VERIFICATION, etc.
+  title             String
+  description       String?
+  acceptedFormats   String[]          @default(["pdf", "jpg", "png"])
+  required          Boolean           @default(true)
+  
+  // Status
+  status            RequestStatus     @default(PENDING)
+  
+  // Relations
+  clientId          String
+  client            Client            @relation(fields: [clientId], references: [id])
+  requestedById     String
+  documentId        String?           // Set when client uploads
+  
+  // Timestamps
+  requestedAt       DateTime          @default(now())
+  completedAt       DateTime?
+  
+  @@index([clientId])
+  @@map("document_requests")
+}
+
+enum RequestStatus {
+  PENDING
+  FULFILLED
+  EXPIRED
+  CANCELLED
+}

@@ -1,0 +1,85 @@
+name: Deploy to Railway
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies (Backend)
+        working-directory: ./backend
+        run: |
+          npm ci
+          npx prisma generate
+
+      - name: Install dependencies (Frontend)
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Type check (Backend)
+        working-directory: ./backend
+        run: npx tsc --noEmit
+
+      - name: Type check (Frontend)
+        working-directory: ./frontend
+        run: npx tsc --noEmit
+
+      - name: Lint (Backend)
+        working-directory: ./backend
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Lint (Frontend)
+        working-directory: ./frontend
+        run: npm run lint
+        continue-on-error: true
+
+  deploy-backend:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy Backend to Railway
+        working-directory: ./backend
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_BACKEND_TOKEN }}
+        run: |
+          railway up --service=aml-guardian-backend --detach
+
+  deploy-frontend:
+    needs: deploy-backend
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy Frontend to Railway
+        working-directory: ./frontend
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_FRONTEND_TOKEN }}
+        run: |
+          railway up --service=aml-guardian-frontend --detach
