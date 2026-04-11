@@ -1,5 +1,5 @@
 # Render Blueprint for AML Guardian Pro
-# This file configures both the backend API and frontend static site
+# This file configures both the backend API and frontend
 
 services:
   # Backend API Service
@@ -50,17 +50,15 @@ services:
       mountPath: /tmp/uploads
       sizeGB: 1
 
-  # Frontend Static Site
+  # Frontend Web Service (serves static files)
   - type: web
     name: aml-guardian-frontend
-    runtime: static
+    runtime: node
+    plan: standard
+    region: frankfurt
     buildCommand: cd frontend && npm install && npm run build
-    staticPublishPath: ./frontend/dist
+    startCommand: cd frontend && npx serve -s dist -l $PORT
     envVars:
       # NOTE: After backend deploys, update this with the actual backend URL
       - key: VITE_API_URL
         value: "https://aml-guardian-backend.onrender.com/api"
-    routes:
-      - type: rewrite
-        source: /(.*)
-        destination: /index.html
