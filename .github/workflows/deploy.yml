@@ -1,14 +1,14 @@
-name: Deploy to Railway
+name: CI/CD Pipeline
 
 on:
   push:
     branches:
-      - main
       - master
+      - main
   pull_request:
     branches:
-      - main
       - master
+      - main
 
 jobs:
   test:
@@ -40,46 +40,22 @@ jobs:
         working-directory: ./frontend
         run: npx tsc --noEmit
 
-      - name: Lint (Backend)
+      - name: Build (Backend)
         working-directory: ./backend
-        run: npm run lint
-        continue-on-error: true
+        run: npm run build
 
-      - name: Lint (Frontend)
+      - name: Build (Frontend)
         working-directory: ./frontend
-        run: npm run lint
-        continue-on-error: true
+        run: npm run build
 
-  deploy-backend:
+  deploy:
     needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-
-      - name: Deploy Backend to Railway
-        working-directory: ./backend
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_BACKEND_TOKEN }}
+      - name: Deploy to Render
         run: |
-          railway up --service=aml-guardian-backend --detach
-
-  deploy-frontend:
-    needs: deploy-backend
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-
-      - name: Deploy Frontend to Railway
-        working-directory: ./frontend
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_FRONTEND_TOKEN }}
-        run: |
-          railway up --service=aml-guardian-frontend --detach
+          echo "🚀 Pushing to GitHub triggers Render auto-deploy"
+          echo "Monitor deployment at: https://dashboard.render.com"

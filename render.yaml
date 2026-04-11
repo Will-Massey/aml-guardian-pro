@@ -1,0 +1,70 @@
+# Render Blueprint for AML Guardian Pro
+# This file configures both the backend API and frontend static site
+
+services:
+  # Backend API Service
+  - type: web
+    name: aml-guardian-backend
+    runtime: node
+    plan: standard
+    region: frankfurt  # Choose a region close to your users
+    buildCommand: cd backend && npm install && npm run build && npx prisma generate
+    startCommand: cd backend && npx prisma migrate deploy && npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: JWT_EXPIRES_IN
+        value: 24h
+      - key: BCRYPT_ROUNDS
+        value: "12"
+      - key: COMPANIES_HOUSE_BASE_URL
+        value: https://api.company-information.service.gov.uk
+      - key: LOG_LEVEL
+        value: info
+      - key: UPLOAD_DIR
+        value: /tmp/uploads
+      - key: MAX_FILE_SIZE
+        value: "10485760"
+      - key: RATE_LIMIT_WINDOW_MS
+        value: "900000"
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: "100"
+      # Secrets - Set these manually in Render dashboard
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: COMPANIES_HOUSE_API_KEY
+        sync: false
+      - key: CLAURST_PROVIDER
+        value: anthropic
+        sync: false
+      - key: CLAURST_MODEL
+        value: claude-opus-4
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+    disk:
+      name: uploads
+      mountPath: /tmp/uploads
+      sizeGB: 1
+
+  # Frontend Static Site
+  - type: static
+    name: aml-guardian-frontend
+    runtime: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: ./frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: aml-guardian-backend
+          property: host
+    routes:
+      - type: rewrite
+        source: /(.*)
+        destination: /index.html

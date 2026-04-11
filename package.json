@@ -16,10 +16,8 @@
     "lint": "npm run lint:backend && npm run lint:frontend",
     "lint:backend": "cd backend && npm run lint",
     "lint:frontend": "cd frontend && npm run lint",
-    "deploy": "./scripts/deploy-railway.sh",
-    "deploy:backend": "./scripts/deploy-railway.sh backend",
-    "deploy:frontend": "./scripts/deploy-railway.sh frontend",
-    "railway:login": "railway login"
+    "deploy": "./scripts/deploy-render.sh",
+    "deploy:help": "cat DEPLOYMENT.md | head -100"
   },
   "keywords": [
     "aml",
