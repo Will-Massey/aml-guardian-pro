@@ -7,7 +7,7 @@ services:
     name: aml-guardian-backend
     runtime: node
     plan: standard
-    region: frankfurt  # Choose a region close to your users
+    region: frankfurt
     buildCommand: cd backend && npm install && npm run build && npx prisma generate
     startCommand: cd backend && npx prisma migrate deploy && npm start
     healthCheckPath: /api/health
@@ -51,14 +51,13 @@ services:
       sizeGB: 1
 
   # Frontend Static Site
-  - type: static
+  - type: web
     name: aml-guardian-frontend
     runtime: static
     buildCommand: cd frontend && npm install && npm run build
     staticPublishPath: ./frontend/dist
     envVars:
       # NOTE: After backend deploys, update this with the actual backend URL
-      # Format: https://aml-guardian-backend.onrender.com/api
       - key: VITE_API_URL
         value: "https://aml-guardian-backend.onrender.com/api"
     routes:
