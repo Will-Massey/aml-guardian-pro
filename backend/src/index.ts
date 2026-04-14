@@ -137,7 +137,7 @@ process.on('uncaughtException', (error) => {
 
 process.on('unhandledRejection', (reason) => {
   logger.error('Unhandled Rejection', reason);
-  gracefulShutdown('UNHANDLED_REJECTION');
+  // Don't exit immediately — log and let the process recover
 });
 
 // Start the server

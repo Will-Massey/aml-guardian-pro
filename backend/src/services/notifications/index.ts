@@ -129,9 +129,9 @@ export function startNotificationScheduler(): void {
   // Check every hour
   setInterval(runChecks, 60 * 60 * 1000);
   
-  // Run immediately on startup
-  checkDocumentExpiries();
-  checkCDDReviews();
+  // Run immediately on startup - catch rejections to prevent crashing the server
+  checkDocumentExpiries().catch((err) => logger.error('Document expiry check failed on startup', err));
+  checkCDDReviews().catch((err) => logger.error('CDD review check failed on startup', err));
 
   logger.info('Notification scheduler started');
 }
