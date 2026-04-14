@@ -1,20 +1,38 @@
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('🌱 Starting database seed...');
 
-  // Create test user
-  const hashedPassword = await bcrypt.hash('Test1234!', 10);
-  
+  // Create demo superadmin
+  const demoPassword = await bcrypt.hash('DemoPass123!', 12);
+  const superAdmin = await prisma.user.upsert({
+    where: { email: 'admin@demo.practice' },
+    update: {},
+    create: {
+      email: 'admin@demo.practice',
+      password: demoPassword,
+      firstName: 'Demo',
+      lastName: 'Admin',
+      firmName: 'Demo Practice Ltd',
+      firmAddress: '123 Demo Street, London, EC1A 1BB',
+      firmPhone: '+44 20 7946 0958',
+      firmEmail: 'admin@demopractice.com',
+      role: 'SUPERADMIN',
+      isActive: true,
+    },
+  });
+
+  // Create legacy test user
+  const testPassword = await bcrypt.hash('Test1234!', 12);
   const user = await prisma.user.upsert({
     where: { email: 'admin@example.com' },
     update: {},
     create: {
       email: 'admin@example.com',
-      password: hashedPassword,
+      password: testPassword,
       firstName: 'Admin',
       lastName: 'User',
       firmName: 'Test Accountancy Firm',
@@ -26,6 +44,7 @@ async function main() {
     },
   });
 
+  console.log('✅ Demo superadmin created:', superAdmin.email);
   console.log('✅ Test user created:', user.email);
 
   // Create test clients
@@ -49,9 +68,9 @@ async function main() {
         businessDescription: 'Accounting and auditing activities',
         riskLevel: 'MEDIUM',
         cddType: 'STANDARD',
-        userId: user.id,
-        createdBy: user.id,
-        updatedBy: user.id,
+        userId: superAdmin.id,
+        createdBy: superAdmin.id,
+        updatedBy: superAdmin.id,
         identityVerified: false,
         addressVerified: false,
         pepScreened: false,
@@ -77,9 +96,9 @@ async function main() {
         businessDescription: 'Business and domestic software development',
         riskLevel: 'LOW',
         cddType: 'SIMPLIFIED',
-        userId: user.id,
-        createdBy: user.id,
-        updatedBy: user.id,
+        userId: superAdmin.id,
+        createdBy: superAdmin.id,
+        updatedBy: superAdmin.id,
         identityVerified: true,
         addressVerified: true,
         pepScreened: true,
@@ -105,9 +124,9 @@ async function main() {
         businessDescription: 'Agents involved in the sale of a variety of goods',
         riskLevel: 'HIGH',
         cddType: 'ENHANCED',
-        userId: user.id,
-        createdBy: user.id,
-        updatedBy: user.id,
+        userId: superAdmin.id,
+        createdBy: superAdmin.id,
+        updatedBy: superAdmin.id,
         identityVerified: false,
         addressVerified: false,
         pepScreened: false,
@@ -174,7 +193,7 @@ async function main() {
         mimeType: 'application/pdf',
         status: 'VERIFIED',
         clientId: clients[0].id,
-        userId: user.id,
+        userId: superAdmin.id,
       },
     }),
     prisma.document.create({
@@ -188,7 +207,7 @@ async function main() {
         mimeType: 'application/pdf',
         status: 'PENDING_VERIFICATION',
         clientId: clients[0].id,
-        userId: user.id,
+        userId: superAdmin.id,
       },
     }),
   ]);
@@ -200,7 +219,7 @@ async function main() {
     data: {
       key: 'test_api_key_' + Math.random().toString(36).substring(2),
       name: 'Test Integration',
-      userId: user.id,
+      userId: superAdmin.id,
       isActive: true,
     },
   });
@@ -212,7 +231,7 @@ async function main() {
     data: {
       url: 'https://webhook.site/test-webhook',
       events: ['client.created', 'document.verified'],
-      userId: user.id,
+      userId: superAdmin.id,
       isActive: true,
     },
   });
@@ -225,16 +244,16 @@ async function main() {
       {
         action: 'LOGIN',
         entityType: 'USER',
-        entityId: user.id,
+        entityId: superAdmin.id,
         description: 'User logged in',
-        userId: user.id,
+        userId: superAdmin.id,
       },
       {
         action: 'CREATE',
         entityType: 'CLIENT',
         entityId: clients[0].id,
         description: 'Created client: CAPSTONE ACCOUNTANCY LIMITED',
-        userId: user.id,
+        userId: superAdmin.id,
       },
     ],
   });
@@ -242,6 +261,9 @@ async function main() {
   console.log('✅ Audit logs created');
 
   console.log('\n🎉 Database seed completed successfully!');
+  console.log('\nDemo credentials:');
+  console.log('  Email: admin@demo.practice');
+  console.log('  Password: DemoPass123!');
   console.log('\nTest credentials:');
   console.log('  Email: admin@example.com');
   console.log('  Password: Test1234!');

@@ -61,5 +61,8 @@
     "companies-house"
   ],
   "author": "AML Guardian Pro",
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "license": "MIT"
 }
