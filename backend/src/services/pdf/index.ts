@@ -1,4 +1,5 @@
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-core';
+import chromium from '@sparticuz/chromium';
 import fs from 'fs/promises';
 import path from 'path';
 import { Client, RiskAssessment, User, DocumentType } from '../../types';
@@ -88,8 +89,9 @@ class PDFGenerationService {
    */
   private async generatePDF(html: string, outputPath: string): Promise<string> {
     const browser = await puppeteer.launch({
-      headless: 'new',
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox'],
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless as boolean | 'new',
     });
 
     try {
