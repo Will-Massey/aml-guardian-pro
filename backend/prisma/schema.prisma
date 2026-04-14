@@ -279,6 +279,7 @@ model Webhook {
 
 // Enums
 enum UserRole {
+  SUPERADMIN
   ADMIN
   MLRO         // Money Laundering Reporting Officer
   ACCOUNTANT

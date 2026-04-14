@@ -1,5 +1,6 @@
 import Tesseract from 'tesseract.js';
 import sharp from 'sharp';
+import fs from 'fs';
 import { logger } from '../../utils/logger';
 
 export interface ExtractedData {
@@ -68,7 +69,7 @@ async function preprocessImage(imagePath: string): Promise<Buffer> {
   } catch (error) {
     logger.warn('Image preprocessing failed, using original', error);
     // Return original if processing fails
-    return require('fs').readFileSync(imagePath);
+    return fs.readFileSync(imagePath);
   }
 }
 
@@ -107,7 +108,7 @@ function extractPassportData(text: string): ExtractedData {
   }
 
   // Date of birth patterns
-  const dobMatch = text.match(/(?:Date of Birth|DOB|Birth)[:\s]+(\d{1,2}[\/\.-]\d{1,2}[\/\.-]\d{2,4})/i);
+  const dobMatch = text.match(/(?:Date of Birth|DOB|Birth)[:\s]+(\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4})/i);
   if (dobMatch) {
     data.dateOfBirth = parseDate(dobMatch[1]);
   }
@@ -119,7 +120,7 @@ function extractPassportData(text: string): ExtractedData {
   }
 
   // Expiry date
-  const expiryMatch = text.match(/(?:Expiry|Expiration|Date of Expiry)[:\s]+(\d{1,2}[\/\.-]\d{1,2}[\/\.-]\d{2,4})/i);
+  const expiryMatch = text.match(/(?:Expiry|Expiration|Date of Expiry)[:\s]+(\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4})/i);
   if (expiryMatch) {
     data.expiryDate = parseDate(expiryMatch[1]);
   }
@@ -146,7 +147,7 @@ function extractDrivingLicenseData(text: string): ExtractedData {
   }
 
   // DOB
-  const dobMatch = text.match(/(?:Date of Birth|DOB)[:\s]+(\d{1,2}[\/\.-]\d{1,2}[\/\.-]\d{2,4})/i);
+  const dobMatch = text.match(/(?:Date of Birth|DOB)[:\s]+(\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4})/i);
   if (dobMatch) {
     data.dateOfBirth = parseDate(dobMatch[1]);
   }
@@ -292,7 +293,7 @@ function parseDate(dateStr: string): string | undefined {
   try {
     // Try common formats
     const formats = [
-      /(\d{1,2})[\/\.-](\d{1,2})[\/\.-](\d{2,4})/,
+      /(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})/,
       /(\d{2})(\d{2})(\d{4})/,
     ];
 

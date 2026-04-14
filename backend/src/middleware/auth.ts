@@ -5,11 +5,9 @@ import { JwtPayload, UserRole } from '../types';
 import { logger } from '../utils/logger';
 
 // Extend Express Request type
-declare global {
-  namespace Express {
-    interface Request {
-      user?: JwtPayload;
-    }
+declare module 'express' {
+  interface Request {
+    user?: JwtPayload;
   }
 }
 

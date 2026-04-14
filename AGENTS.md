@@ -390,9 +390,10 @@ interface ApiResponse<T> {
 ### Backend Testing
 - Jest configured for unit testing (minimal tests currently)
 - Run with: `npm test` in backend directory
+- ESLint (`.eslintrc.json`) and TypeScript (`tsc --noEmit`) for quality gates
 
 ### Frontend Testing
-- ESLint for code quality
+- ESLint (`.eslintrc.json`) for code quality
 - TypeScript for type checking
 - No unit tests currently configured (can be added with Jest/Vitest)
 

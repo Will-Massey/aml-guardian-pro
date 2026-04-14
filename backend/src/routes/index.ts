@@ -10,6 +10,7 @@ import teamRoutes from './team';
 import apiRoutes from './api';
 import chatRoutes from './chat';
 import portalRoutes from './portal';
+import adminRoutes from './admin';
 
 const router = Router();
 
@@ -37,5 +38,6 @@ router.use('/team', teamRoutes);
 router.use('/v1', apiRoutes);
 router.use('/chat', chatRoutes);
 router.use('/portal', portalRoutes);
+router.use('/admin', adminRoutes);
 
 export default router;
