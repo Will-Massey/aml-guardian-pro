@@ -44,7 +44,7 @@ services:
       - key: CLAURST_MODEL
         value: claude-opus-4
       - key: CORS_ORIGINS
-        sync: false
+        value: https://aml-guardian-frontend.onrender.com
     disk:
       name: uploads
       mountPath: /tmp/uploads
